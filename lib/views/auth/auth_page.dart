@@ -1,3 +1,156 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:twitter/common_widget/close_only_dialog.dart';
+import 'package:twitter/common_widget/margin_sizedbox.dart';
+import 'package:twitter/views/auth/components/auth_text_form_field.dart';
+import 'package:twitter/views/auth/password_reminder_page.dart';
+import 'package:twitter/views/bottom_navigation/bottom_navigation_page.dart';
+
+class AuthPage extends StatefulWidget {
+  const AuthPage({super.key});
+
+  @override
+  State<AuthPage> createState() => _AuthPageState();
+}
+
+class _AuthPageState extends State<AuthPage> {
+  @override
+  Widget build(BuildContext context) {
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+    TextEditingController emailController = TextEditingController();
+    TextEditingController passController = TextEditingController();
+    return Scaffold(
+        body: Form(
+      key: formKey,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AuthTextFormField(
+              controller: emailController,
+              label: 'メールアドレス',
+            ),
+            MarginSizedBox.smallHeightMargin,
+            AuthTextFormField(
+              controller: passController,
+              label: 'パスワード',
+            ),
+            MarginSizedBox.smallHeightMargin,
+             SizedBox(
+              width: double.infinity,
+              child: InkWell(
+                onTap: (){
+                  Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return const PassWordReminderPage();
+                      }));
+                },
+                child: const Text(
+                  'パスワード忘れ方はこちら',
+                  style: TextStyle(
+                    color: Colors.blue,
+                  ),
+                  textAlign: TextAlign.end,
+                ),
+              ),
+            ),
+            MarginSizedBox.bigHeightMargin,
+            ElevatedButton(
+                onPressed: () async {
+                  if (!formKey.currentState!.validate()) {
+                    return;
+                  }
+
+                  try {
+                    final User? user = (await FirebaseAuth.instance
+                            .createUserWithEmailAndPassword(
+                                email: emailController.text,
+                                password: passController.text))
+                        .user;
+                    if (user != null) {
+                      print("ユーザ登録しました ");
+
+                      FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .set({
+                        'userName':'',
+                        'imageUrl':'',
+                        'createdAt':DateTime.now(),
+                        'updatedAt':DateTime.now(),
+
+                      });
+
+                      showCloseOnlyDialog(context, 'ユーザ登録成功');
+                    }
+                  } on FirebaseAuthException catch (error) {
+                    if (error.code == 'email-already-in-use') {
+                      print('このメールアドレスはすでに使われています');
+                      showCloseOnlyDialog(context, 'このメールアドレスはすでに使われています');
+                    }
+
+                    if (error.code == 'invalid-email') {
+                      print('メールアドレスの形式にしてください');
+                      showCloseOnlyDialog(context, 'メールアドレスの形式にしてください');
+                    }
+
+                    if (error.code == 'weak-password') {
+                      print('このパスワードは弱すぎます');
+                      showCloseOnlyDialog(context, 'パスワードが弱すぎます');
+                    }
+                  } catch (error) {
+                    print('予期せぬエラー');
+                    showCloseOnlyDialog(context, '予期せぬエラー');
+                  }
+                },
+                child: const Text('会員登録')),
+            MarginSizedBox.smallHeightMargin,
+            ElevatedButton(
+                onPressed: () async {
+                  if (!formKey.currentState!.validate()) {
+                    return;
+                  }
+                  try {
+                    final FirebaseAuth auth = FirebaseAuth.instance;
+                    final User? user = (await auth.signInWithEmailAndPassword(
+                      email: emailController.text,
+                      password: passController.text,
+                    ))
+                        .user;
+                    if (user != null) {
+                      print('ログイン成功');
+                      
+                    } else {
+                      print('ログイン失敗');
+                    }
+//
+                  } on FirebaseAuthException catch (error) {
+                    if (error.code == 'user-not-found') {
+                      // ignore: use_build_context_synchronously
+                      showCloseOnlyDialog(context, 'ユーザが見つかりません');
+                    }
+                    if (error.code == 'invalid-email') {
+                      // ignore: use_build_context_synchronously
+                      showCloseOnlyDialog(context, 'メールアドレスの形式でありません');
+                    }
+                  } catch (e) {
+                    // ignore: use_build_context_synchronously
+                    showCloseOnlyDialog(context, '予期せぬエラー');
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+                child: const Text('ログイン')),
+          ],
+        ),
+      ),
+    ));
+  }
+}
+
+
+
 // import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:flutter/material.dart';
@@ -34,16 +187,13 @@
 //                 label: 'メールアドレス',
 //               ),
 
-
 //               MarginSizedBox.smallHeightMargin,
 //               AuthTextFormField(
 //                 controller: passController,
 //                 label: 'パスワード',
 //               ),
 
-
 //               MarginSizedBox.smallHeightMargin,
-
 
 //               SizedBox( //枠を作った
 

@@ -6,20 +6,20 @@ class AuthTextFormField extends StatelessWidget {
     required this.controller,
     required this.label,
   });
-  final String label;
-  final TextEditingController controller;
 
+  final TextEditingController controller;
+  final String label;
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      validator: (value) {
-        if (value == null || value == '') {
-          return '未入力ですよ';
+      validator: (value){
+        if(value==null||value==''){
+          return '未入力';
         }
         return null;
       },
       decoration: InputDecoration(
-        label: Text(label),
+        label: Text(label)
       ),
       controller: controller,
     );
